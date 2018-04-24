@@ -1,5 +1,6 @@
-import { objHas, merge } from './helper'
+import { objHas, merge } from 'cbo317110-helper'
 import Translate from './translate.js'
+import AxiosCover from 'axios-cover'
 
 const defense = (component = {}) => {
 	if (objHas(component, 'config')) {
@@ -9,6 +10,14 @@ const defense = (component = {}) => {
 }
 
 const config = {
+	alias: {
+		language: {
+			render: '$trans'
+		},
+		resource: {
+			resource: '$resource'
+		}
+	},
 	event: {
 		prefix: 'static_event_',
 		collection: []
@@ -20,10 +29,12 @@ const config = {
 			pt_BR: {
 				table: 'Cadeira'
 			}
-		},
-		aliases: {
-			render: '$trans'
 		}
+	},
+	resource: {},
+	saved: {
+		data: {},
+		resource: {}
 	}
 }
 
@@ -48,7 +59,18 @@ const base = env => {
 		},
 		methods,
 		created() {
-			this[this['[maEnv]'].language.aliases.render] = Translate.str
+			if(objHas(this['[maEnv]'], 'resource')) {
+				let resources = this['[maEnv]'].resource
+				for(let r in resources) {
+					this['[maEnv]'].saved.resource[r] = AxiosCover(resources[r]).client
+				}
+				this[this['[maEnv]'].alias.resource.resource] = (name) => {
+					if (this['[maEnv]'].saved.resource[name]) {
+						return this['[maEnv]'].saved.resource[name]()
+					}
+				}
+			}
+			this[this['[maEnv]'].alias.language.render] = Translate.str
 		},
 		mounted() {
 			Translate.events(this)
