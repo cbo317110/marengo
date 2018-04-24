@@ -1,5 +1,5 @@
-### Marengo
-Components ready for the battle!
+#### Marengo
+`Components ready for the battle`
 
 - [ ] Translations management
 - [ ] Axios Handler
