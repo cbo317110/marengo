@@ -1,6 +1,8 @@
 import { objHas, merge } from 'cbo317110-helper'
-import Translate from './translate.js'
 import AxiosCover from 'axios-cover'
+
+import Translate from './translate.js'
+import Middleware from './middleware'
 
 const defense = (component = {}) => {
 	if (objHas(component, 'config')) {
@@ -38,9 +40,22 @@ const config = {
 	}
 }
 
-const base = env => {
+const base = (env, middleware) => {
 	let methods = {}
+	let components = {}
+	
+	if (middleware) {
+		components.middleware = Middleware
+		methods['[maEnv]Middleware'] = middleware
+		methods['[maEnv]MiddlewareCompleted'] = function() {
+			this.$nextTick(() => {
+				this.$children[0].allow()
+			})
+		}
+	}
+
 	return {
+		components,
 		data() {
 			return {
 				marengo: merge(config, env)
@@ -70,6 +85,7 @@ const base = env => {
 					}
 				}
 			}
+			this['[maEnv]Middleware'](this['[maEnv]MiddlewareCompleted'])
 			this[this['[maEnv]'].alias.language.render] = Translate.str
 		},
 		mounted() {
@@ -81,8 +97,10 @@ const base = env => {
 export default (component = {}) => {
 	if (defense(component)) {
 		let env = component.config
+		let middleware = component.middleware
+		component.extends = base(env, middleware)
 		delete component.config
-		component.extends = base(env)
+		delete component.middleware
 		return component
 	} else {
 		console.warn('Invalid Marengo component!')
