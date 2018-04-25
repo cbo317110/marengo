@@ -5,3 +5,5 @@
 - [x] Axios Handler
 - [x] Optional middleware
 - [ ] Some helper functions
+- [ ] Clean final component
+- [ ] Make sure that libs and (some) variables are used once
