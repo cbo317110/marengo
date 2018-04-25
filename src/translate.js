@@ -1,8 +1,8 @@
 import { isArray, isObj, isString, isFunction, replace } from 'cbo317110-helper'
 
 const str = function(word, data, lang, langs, str = '', event) {
-	lang = this['[maEnv]'].language.current
-	langs = this['[maEnv]'].language.package
+	lang = this['(MA)'].language.current
+	langs = this['(MA)'].language.package
 	if (langs[lang][word]) {
 		str = langs[lang][word]
 		if (!data || !isObj(data)) {
@@ -16,9 +16,9 @@ const str = function(word, data, lang, langs, str = '', event) {
 					str = str.replace(`{${key}}`, `<a href="${data[key][1]}">${data[key][0]}</a>`)
 				}
 				if (isFunction(data[key][1])) {
-					event = `${this['[maEnv]'].event.prefix}${replace(replace(word, '.', '_'), ' ', '_')}_${key}`
+					event = `${this['(MA)'].event.prefix}${replace(replace(word, '.', '_'), ' ', '_')}_${key}`
 					str = str.replace(`{${key}}`, `<span id="${event}">${data[key][0]}</span>`)
-					this['[maEnv]'].event.collection[event] = data[key][1]
+					this['(MA)'].event.collection[event] = data[key][1]
 				}
 			}
 			return str
@@ -28,9 +28,9 @@ const str = function(word, data, lang, langs, str = '', event) {
 }
 
 const events = (ref) => {
-	for (let event in ref['[maEnv]'].event.collection) {
+	for (let event in ref['(MA)'].event.collection) {
 		if (document.querySelector(`#${event}`)) {
-			document.querySelector(`#${event}`).onclick = ref['[maEnv]'].event.collection[event]
+			document.querySelector(`#${event}`).onclick = ref['(MA)'].event.collection[event]
 		}
 	}
 } 

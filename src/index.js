@@ -1,11 +1,11 @@
-import { objHas, merge } from 'cbo317110-helper'
+import *  as H from 'cbo317110-helper'
 import AxiosCover from 'axios-cover'
 
 import Translate from './translate.js'
 import Middleware from './middleware'
 
 const defense = (component = {}) => {
-	if (objHas(component, 'config')) {
+	if (H.objHas(component, 'config')) {
 		return true
 	}
 	return false
@@ -41,13 +41,18 @@ const config = {
 }
 
 const base = (env, middleware) => {
+	
 	let methods = {}
 	let components = {}
+
+	for (let name in H) {
+		methods[name] = H[name]
+	}
 	
 	if (middleware) {
 		components.middleware = Middleware
-		methods['[maEnv]Middleware'] = middleware
-		methods['[maEnv]MiddlewareCompleted'] = function() {
+		methods['(MA)Middleware'] = middleware
+		methods['(MA)MiddlewareCompleted'] = function() {
 			this.$nextTick(() => {
 				this.$children[0].allow()
 			})
@@ -58,7 +63,7 @@ const base = (env, middleware) => {
 		components,
 		data() {
 			return {
-				marengo: merge(config, env)
+				marengo: H.merge(config, env)
 			}
 		},
 		props: {
@@ -68,25 +73,25 @@ const base = (env, middleware) => {
 			}
 		},
 		computed: {
-			'[maEnv]'() {
-				return merge(this.marengo, this.config)
+			'(MA)'() {
+				return H.merge(this.marengo, this.config)
 			}
 		},
 		methods,
 		created() {
-			if(objHas(this['[maEnv]'], 'resource')) {
-				let resources = this['[maEnv]'].resource
+			if(H.objHas(this['(MA)'], 'resource')) {
+				let resources = this['(MA)'].resource
 				for(let r in resources) {
-					this['[maEnv]'].saved.resource[r] = AxiosCover(resources[r]).client
+					this['(MA)'].saved.resource[r] = AxiosCover(resources[r]).client
 				}
-				this[this['[maEnv]'].alias.resource.resource] = (name) => {
-					if (this['[maEnv]'].saved.resource[name]) {
-						return this['[maEnv]'].saved.resource[name]()
+				this[this['(MA)'].alias.resource.resource] = (name) => {
+					if (this['(MA)'].saved.resource[name]) {
+						return this['(MA)'].saved.resource[name]()
 					}
 				}
 			}
-			this['[maEnv]Middleware'](this['[maEnv]MiddlewareCompleted'])
-			this[this['[maEnv]'].alias.language.render] = Translate.str
+			this['(MA)Middleware'](this['(MA)MiddlewareCompleted'])
+			this[this['(MA)'].alias.language.render] = Translate.str
 		},
 		mounted() {
 			Translate.events(this)
