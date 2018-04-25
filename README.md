@@ -3,5 +3,5 @@
 
 - [x] Translations management
 - [x] Axios Handler
-- [ ] Optional middleware
+- [x] Optional middleware
 - [ ] Some helper functions
