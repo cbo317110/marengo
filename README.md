@@ -3,7 +3,7 @@
 
 **THE PROBLEM!**
 
-While developmenting an web application with vue, i se myself without freedom, (WHAT?) i choosed vue just cause it give to me freedom and speed. During 5 months my application become hard to maitain and to get done, because my scope are just too large, many remote content, many possible environmnets provided by our API, and also a lot of things to care about, like customization, translations, future changes provided by my bosses, then i se myself with the need of create/debug my components out of my application and i discover myself chained with vuex, router, and remote content that are provided by the global application! Scope problem? Maybe not, i need just much, much, discipline to get all content controlled by a single constructor, and i never wanted micro instances of vue.js!
+While developmenting an web application with vue, i see myself without freedom, (WHAT?) i choosed vue just cause it give to me freedom and speed. During 5 months my application become hard to maitain and to get done, because my scope are just too large, many remote content, many possible environmnets provided by our API, and also a lot of things to care about, like customization, translations, future changes provided by my bosses, then i se myself with the need of create/debug my components out of my application and i discover myself chained with vuex, router, and remote content that are provided by the global application! Scope problem? Maybe not, i need just much, much, discipline to get all content controlled by a single constructor, and i never wanted micro instances of vue.js!
 
 **THE SOLUTION**
 
