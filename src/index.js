@@ -1,4 +1,4 @@
-import *  as H from 'cbo317110-helper'
+import *  as H from 'moon-helper'
 import AxiosCover from 'axios-cover'
 
 import Translate from './translate.js'
