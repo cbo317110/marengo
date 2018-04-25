@@ -3,112 +3,125 @@ import AxiosCover from 'axios-cover'
 
 import Translate from './translate.js'
 import Middleware from './middleware'
+import config from './config'
 
-const defense = (component = {}) => {
-	if (H.objHas(component, 'config')) {
-		return true
-	}
-	return false
-}
-
-const config = {
-	alias: {
-		language: {
-			render: '$trans'
-		},
-		resource: {
-			resource: '$resource'
-		}
-	},
-	event: {
-		prefix: 'static_event_',
-		collection: []
-	},
-	language: {
-		current: 'en_US',
-		supported: ['pt_BR', 'en_US', 'es_ES'],
-		package: {
-			pt_BR: {
-				table: 'Cadeira'
-			}
-		}
-	},
-	resource: {},
-	saved: {
-		data: {},
-		resource: {}
-	}
-}
-
-const base = (env, middleware) => {
+if (!window['marengo']) {
 	
-	let methods = {}
-	let components = {}
+	window['marengo'] = (
+		devConfig,
+		middleware,
+		resource,
+		methods = {},
+		components = {}
+	) => {
 
-	for (let name in H) {
-		methods[name] = H[name]
-	}
-	
-	if (middleware) {
-		components.middleware = Middleware
-		methods['(MA)Middleware'] = middleware
-		methods['(MA)MiddlewareCompleted'] = function() {
-			this.$nextTick(() => {
-				this.$children[0].allow()
-			})
+		/* Inject Helper Functions */
+		for (let name in H) {
+			methods[name] = H[name]
 		}
-	}
 
-	return {
-		components,
-		data() {
-			return {
-				marengo: H.merge(config, env)
-			}
-		},
-		props: {
+		/* Component Data */
+		const data = {
+			marengo: H.merge(config, devConfig)
+		}
+
+		/* Component Props */
+		const props = {
 			config: {
 				default: () => {},
 				type: Object
 			}
-		},
-		computed: {
+		}
+
+		/* Inject (MA) Computed Object */
+		/* (MA) is a shorthand for 'Marengo' */
+		const computed = {
 			'(MA)'() {
 				return H.merge(this.marengo, this.config)
 			}
-		},
-		methods,
-		created() {
-			if(H.objHas(this['(MA)'], 'resource')) {
-				let resources = this['(MA)'].resource
-				for(let r in resources) {
-					this['(MA)'].saved.resource[r] = AxiosCover(resources[r]).client
-				}
-				this[this['(MA)'].alias.resource.resource] = (name) => {
-					if (this['(MA)'].saved.resource[name]) {
-						return this['(MA)'].saved.resource[name]()
+		}
+
+		/* Inject middleware component if was asked for it */
+		if (middleware) components.middleware = Middleware
+
+
+		/* Injection of features */
+		const injection = {
+			resource(C) {
+				for(let r in resource) {
+					C['(MA)'].saved.resource[r] = AxiosCover(resource[r]).client
+					C[C['(MA)'].alias.resource.resource] = (name) => {
+						if (C['(MA)'].saved.resource[name]) {
+							return C['(MA)'].saved.resource[name]()
+						}
 					}
 				}
+			},
+			middleware(C) {
+				C['(MA)Mid'] = middleware
+				C['(MA)Mid'](() => {
+					C.$nextTick(() => {
+						C.$children[0].allow()
+					})
+				})
+			},
+			language(C) {
+				C[C['(MA)'].alias.language.render] = Translate.str
 			}
-			this['(MA)Middleware'](this['(MA)MiddlewareCompleted'])
-			this[this['(MA)'].alias.language.render] = Translate.str
-		},
-		mounted() {
+		}
+
+		/* Check of requirements */
+		const check = {
+			language(C) {
+				return C['(MA)'].language.package[C['(MA)'].language.current]
+			},
+			resource(C) {
+				return resource
+			},
+			middleware(C) {
+				return middleware
+			}
+		}
+
+		/* Events */
+
+		/* Created event */
+		const created = function(){
+			if (check.resource(this)) injection.resource(this)
+			if (check.middleware(this)) injection.middleware(this)
+			if (check.language(this)) injection.language(this)
+		}
+
+		/* Mounted event */
+		const mounted = function(){
 			Translate.events(this)
 		}
+
+		return {
+			components,
+			data: () => data,
+			props,
+			computed,
+			methods,
+			created,
+			mounted
+		}
+
 	}
 }
 
-export default (component = {}) => {
-	if (defense(component)) {
-		let env = component.config
-		let middleware = component.middleware
-		component.extends = base(env, middleware)
-		delete component.config
-		delete component.middleware
-		return component
-	} else {
-		console.warn('Invalid Marengo component!')
-		return component
+/* H means Helper */
+/* C means Component */
+/* R means Requirement */
+export default (C = {}, R = ['config', 'middleware', 'resource'], args = []) => {
+	if (H.objHas(C, 'config')) {
+		for (let r of R) {
+			args.push(C[r])
+			delete[C[r]]
+		}
+		C.extends = window['marengo'](...args)
+		return C
 	}
+	console.warn('Invalid Marengo component!')
+	return C
 }
