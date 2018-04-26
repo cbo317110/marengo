@@ -1,4 +1,4 @@
-import { isArray, isObj, isString, isFunction, replace } from 'cbo317110-helper'
+import { isArray, isObj, isString, isFunction, replace } from 'moon-helper'
 
 const str = function(word, data, lang, langs, str = '', event) {
 	lang = this['(MA)'].language.current
