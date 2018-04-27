@@ -12,6 +12,9 @@ Marengo is vue.js helper component constructor to develop components fully indep
 **Example**
 ``` typescript
 import Marengo from 'marengo'
+import config from './config'
+import resource from './resource'
+import middleware from './middleware'
 
 export default Marengo({
   config,
