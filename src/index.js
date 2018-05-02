@@ -1,9 +1,12 @@
 import { merge, objHas } from 'moon-helper'
 import Conf from './conf'
+import Template from './template'
+import Events from './vue/events'
 
 /* Install Marengo once */
 if (!window['marengo']) { window['marengo'] = (conf) => {
-
+	window['marengo-$'] = Conf
+	
 	/* Defense */
 	if (!objHas(conf, ['env', 'body', 'kext'])) {
 		Conf.logs.warn('Invalid component')
@@ -11,25 +14,12 @@ if (!window['marengo']) { window['marengo'] = (conf) => {
 	}
 
 	/* Merge given conf with marengo defaults */
-	conf = merge({
-		env: {
-			language: 'en_US',
-			requests: []
-		},
-		DOM: {
-			events: {}
-		}
-	}, conf)
+	conf = merge(Template, conf)
 
 	/* Create vue component objects */
 	let methods = {}
 	let components = {}
-	let events = {
-		beforeCreate: [],
-		created: [],
-		mounted: [],
-		updated: []
-	}
+	let events = Events
 
 	/* Inject marengo environment in this component */
 	events.beforeCreate.push(function() {
@@ -37,9 +27,11 @@ if (!window['marengo']) { window['marengo'] = (conf) => {
 	})
 
 	for (let p in conf.kext) {
-		window['marengo-$'] = Conf
 		if (objHas(conf.kext, p)) {
 			if (conf.kext[p].check(conf.body[p])) {
+				if (objHas(conf.kext[p], 'env')) {
+					conf.env = merge(conf.env, conf.kext[p].env)
+				}
 				if (objHas(conf.kext[p], 'events')) {
 					for (let e in events) {
 						if (objHas(conf.kext[p].events, e)) {
