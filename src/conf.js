@@ -1,3 +1,8 @@
 export default {
-	alias: '(M('
+	alias: '(M(',
+	logs: {
+		warn(msg) {
+			console.warn(`Marengo: ${msg}`)
+		}
+	}
 }

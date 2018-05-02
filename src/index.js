@@ -1,16 +1,14 @@
 import { merge, objHas } from 'moon-helper'
-
-import Plugins from './plugins'
 import Conf from './conf'
-import Logs from './logs'
 
+/* Install Marengo once */
 if (!window['marengo']) { window['marengo'] = (conf) => {
-	
-	if (!objHas(conf, ['env', 'plugins'])) {
-		Logs.warn('Invalid component')
+
+	/* Defense */
+	if (!objHas(conf, ['env', 'body', 'kext'])) {
+		Conf.logs.warn('Invalid component')
 		return
 	}
-
 
 	/* Merge given conf with marengo defaults */
 	conf = merge({
@@ -38,24 +36,25 @@ if (!window['marengo']) { window['marengo'] = (conf) => {
 		this[Conf.alias] = conf
 	})
 
-	for (let p in conf.plugins) {
-		if (objHas(Plugins, p)) {
-			if (Plugins[p].check(conf.plugins[p])) {
-				if (objHas(Plugins[p], 'events')) {
+	for (let p in conf.kext) {
+		window['marengo-$'] = Conf
+		if (objHas(conf.kext, p)) {
+			if (conf.kext[p].check(conf.body[p])) {
+				if (objHas(conf.kext[p], 'events')) {
 					for (let e in events) {
-						if (objHas(Plugins[p].events, e)) {
-							events[e].push(Plugins[p].events[e])
+						if (objHas(conf.kext[p].events, e)) {
+							events[e].push(conf.kext[p].events[e])
 						}
 					}
 				}
-				if (objHas(Plugins[p], 'components')) {
-					components = merge(components, Plugins[p].components)
+				if (objHas(conf.kext[p], 'components')) {
+					components = merge(components, conf.kext[p].components)
 				}
 			} else {
-				Logs.warn(`Plugin [${p}] hasn't a valid schema`)
+				Conf.logs.warn(`Plugin [${p}] hasn't a valid schema`)
 			}
 		} else {
-			Logs.warn(`Plugin [${p}] not exists`)
+			Conf.logs.warn(`Plugin [${p}] not exists`)
 		}
 	}
 
@@ -66,14 +65,13 @@ if (!window['marengo']) { window['marengo'] = (conf) => {
 
 } }
 
-/* H means Helper */
-/* C means Component */
-/* R means Requirement */
-export default (C = {}, R = ['conf', 'lang', 'request', 'middleware'], args = []) => {
-	for (let r of R) {
-		args.push(C[r])
-		delete[C[r]]
+export default (component = {}, conf) => {
+	if (objHas(component, 'conf')) {
+		conf = component.conf
+		delete component.conf
+		component.extends = window['marengo'](conf)
+	} else {
+		Conf.logs.warn('Invalid component')
 	}
-	C.extends = window['marengo'](...args)
-	return C
+	return component
 }
