@@ -1,127 +1,79 @@
-import *  as H from 'moon-helper'
-import AxiosCover from 'axios-cover'
+import { merge, objHas } from 'moon-helper'
 
-import Translate from './translate.js'
-import Middleware from './middleware'
-import config from './config'
+import Plugins from './plugins'
+import Conf from './conf'
+import Logs from './logs'
 
-if (!window['marengo']) {
+if (!window['marengo']) { window['marengo'] = (conf) => {
 	
-	window['marengo'] = (
-		devConfig,
-		middleware,
-		resource,
-		methods = {},
-		components = {}
-	) => {
+	if (!objHas(conf, ['env', 'plugins'])) {
+		Logs.warn('Invalid component')
+		return
+	}
 
-		/* Inject Helper Functions */
-		for (let name in H) {
-			methods[name] = H[name]
+
+	/* Merge given conf with marengo defaults */
+	conf = merge({
+		env: {
+			language: 'en_US',
+			requests: []
+		},
+		DOM: {
+			events: {}
 		}
+	}, conf)
 
-		/* Component Data */
-		const data = {
-			marengo: H.merge(config, devConfig)
-		}
+	/* Create vue component objects */
+	let methods = {}
+	let components = {}
+	let events = {
+		beforeCreate: [],
+		created: [],
+		mounted: [],
+		updated: []
+	}
 
-		/* Component Props */
-		const props = {
-			config: {
-				default: () => {},
-				type: Object
-			}
-		}
+	/* Inject marengo environment in this component */
+	events.beforeCreate.push(function() {
+		this[Conf.alias] = conf
+	})
 
-		/* Inject (MA) Computed Object */
-		/* (MA) is a shorthand for 'Marengo' */
-		const computed = {
-			'(MA)'() {
-				return H.merge(this.marengo, this.config)
-			}
-		}
-
-		/* Inject middleware component if was asked for it */
-		if (middleware) components.middleware = Middleware
-
-
-		/* Injection of features */
-		const injection = {
-			resource(C) {
-				for(let r in resource) {
-					C['(MA)'].saved.resource[r] = AxiosCover(resource[r]).client
-					C[C['(MA)'].alias.resource.resource] = (name) => {
-						if (C['(MA)'].saved.resource[name]) {
-							return C['(MA)'].saved.resource[name]()
+	for (let p in conf.plugins) {
+		if (objHas(Plugins, p)) {
+			if (Plugins[p].check(conf.plugins[p])) {
+				if (objHas(Plugins[p], 'events')) {
+					for (let e in events) {
+						if (objHas(Plugins[p].events, e)) {
+							events[e].push(Plugins[p].events[e])
 						}
 					}
 				}
-			},
-			middleware(C) {
-				C['(MA)Mid'] = middleware
-				C['(MA)Mid'](() => {
-					C.$nextTick(() => {
-						C.$children[0].allow()
-					})
-				})
-			},
-			language(C) {
-				C[C['(MA)'].alias.language.render] = Translate.str
+				if (objHas(Plugins[p], 'components')) {
+					components = merge(components, Plugins[p].components)
+				}
+			} else {
+				Logs.warn(`Plugin [${p}] hasn't a valid schema`)
 			}
+		} else {
+			Logs.warn(`Plugin [${p}] not exists`)
 		}
-
-		/* Check of requirements */
-		const check = {
-			language(C) {
-				return C['(MA)'].language.package[C['(MA)'].language.current]
-			},
-			resource(C) {
-				return resource
-			},
-			middleware(C) {
-				return middleware
-			}
-		}
-
-		/* Events */
-
-		/* Created event */
-		const created = function(){
-			if (check.resource(this)) injection.resource(this)
-			if (check.middleware(this)) injection.middleware(this)
-			if (check.language(this)) injection.language(this)
-		}
-
-		/* Mounted event */
-		const mounted = function(){
-			Translate.events(this)
-		}
-
-		return {
-			components,
-			data: () => data,
-			props,
-			computed,
-			methods,
-			created,
-			mounted
-		}
-
 	}
-}
+
+	return merge({
+		methods,
+		components
+	}, events)
+
+} }
 
 /* H means Helper */
 /* C means Component */
 /* R means Requirement */
-export default (C = {}, R = ['config', 'middleware', 'resource'], args = []) => {
-	if (H.objHas(C, 'config')) {
-		for (let r of R) {
-			args.push(C[r])
-			delete[C[r]]
-		}
-		C.extends = window['marengo'](...args)
-		return C
+export default (C = {}, R = ['conf', 'lang', 'request', 'middleware'], args = []) => {
+	for (let r of R) {
+		args.push(C[r])
+		delete[C[r]]
 	}
-	console.warn('Invalid Marengo component!')
+	C.extends = window['marengo'](...args)
 	return C
 }
