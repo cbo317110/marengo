@@ -1,7 +1,7 @@
-import { merge, objHas } from 'moon-helper'
-import Conf from './conf'
-import Template from './template'
-import Events from './vue/events'
+const { merge, objHas } = require('moon-helper')
+const Conf = require('./conf')
+const Template = require('./template')
+const Events = require('./vue/events')
 
 /* Install Marengo once */
 if (!window['marengo']) { window['marengo'] = (conf) => {
@@ -57,7 +57,7 @@ if (!window['marengo']) { window['marengo'] = (conf) => {
 
 } }
 
-export default (component = {}, conf) => {
+module.exports =  (component = {}, conf) => {
 	if (objHas(component, 'conf')) {
 		conf = component.conf
 		delete component.conf
