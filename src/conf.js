@@ -1,4 +1,4 @@
-export default {
+module.exports = {
 	alias: '(M(',
 	logs: {
 		warn(msg) {
