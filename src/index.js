@@ -57,11 +57,11 @@ if (!window['marengo']) { window['marengo'] = (conf) => {
 
 } }
 
-module.exports =  (component = {}, conf) => {
-	if (objHas(component, 'conf')) {
-		conf = component.conf
-		delete component.conf
-		component.extends = window['marengo'](conf)
+module.exports =  (component = {}, marengo) => {
+	if (objHas(component, 'marengo')) {
+		marengo = component.marengo
+		delete component.marengo
+		component.extends = window['marengo'](marengo)
 	} else {
 		Conf.logs.warn('Invalid component')
 	}
