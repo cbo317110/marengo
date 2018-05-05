@@ -1,7 +1,2 @@
-const { objHas } = require('moon-helper')
-const Marengo = require('./lib')
-
-module.exports = (component = {}, settings = {}, plugins = {}) => {
-	component.extends = Marengo(settings, plugins)
-	return component
-}
+const m = require('./lib')
+module.exports = (s, p) => m(s, p)

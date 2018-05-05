@@ -1,5 +1,4 @@
 const { objHas, merge } = require('moon-helper')
-const Template = require('./template')
 const Events = require('./vue/events')
 
 module.exports = (target, plugins) => {
@@ -10,8 +9,21 @@ module.exports = (target, plugins) => {
 
 	/* Init the horse */
 	Events.beforeCreate.push(function() {
-		this['(M)'] = target
+		this['!(M)'] = target
 	})
+
+	let props = {
+		env: {
+			default: () => {},
+			type: Object
+		}
+	}
+
+	let computed = {
+		'(M)': function(){
+			return merge(this['!(M)'], this.env)
+		}
+	}
 
 	for (let p in plugins) {
 		if (objHas(plugins, p)) {
@@ -39,7 +51,9 @@ module.exports = (target, plugins) => {
 
 	return merge({
 		methods,
-		components
+		components,
+		props,
+		computed
 	}, Events)
 
 }
