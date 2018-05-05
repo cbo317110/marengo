@@ -1,10 +1,9 @@
 {
 	"name": "marengo",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"main": "src/index.js",
 	"dependencies": {
-		"axios-cover": "^0.0.6",
-		"moon-helper": "^0.0.2",
+		"moon-helper": "^0.0.4",
 		"vue": "^2.5.16"
 	},
 	"devDependencies": {
