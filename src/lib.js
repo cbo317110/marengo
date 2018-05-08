@@ -29,7 +29,7 @@ module.exports = (target, plugins) => {
 		if (objHas(plugins, p)) {
 			if (plugins[p].check(target[p])) {
 				if (objHas(plugins[p], 'standard')) {
-					target[p] = merge(target[p], plugins[p].standard)
+					target[p] = merge(plugins[p].standard, target[p])
 				}
 				if (objHas(plugins[p], 'events')) {
 					for (let e in Events) {
