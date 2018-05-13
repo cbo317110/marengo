@@ -15,7 +15,7 @@ export default (target, plugins) => {
 
 	// Init the horse
 	events.beforeCreate.push(function() {
-		
+
 		this['!(M)'] = target
 		
 		if (!this.$root['(M, root, drive)']) {
@@ -65,7 +65,7 @@ export default (target, plugins) => {
 	}
 
 	for (let p in plugins) {
-		if (objHas(target, p) && plugins[p].check(target[p])) {
+		if (objHas(target, p) && plugins[p].check(target[p]) || plugins[p].ignoreProps === true) {
 			if (objHas(plugins[p], 'events')) {
 				for (let e in events) {
 					if (objHas(plugins[p].events, e)) {
@@ -74,7 +74,9 @@ export default (target, plugins) => {
 				}
 			}
 			if (objHas(plugins[p], 'components')) {
-				components = merge(components, plugins[p].components)
+				for (let c in plugins[p].components) {
+					components[c] = plugins[p].components[c]
+				}
 			}
 		}
 	}
