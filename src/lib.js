@@ -65,7 +65,7 @@ export default (target, plugins) => {
 	}
 
 	for (let p in plugins) {
-		if (plugins[p].check(target[p])) {
+		if (objHas(target, p) && plugins[p].check(target[p])) {
 			if (objHas(plugins[p], 'events')) {
 				for (let e in events) {
 					if (objHas(plugins[p].events, e)) {
@@ -76,8 +76,6 @@ export default (target, plugins) => {
 			if (objHas(plugins[p], 'components')) {
 				components = merge(components, plugins[p].components)
 			}
-		} else {
-			console.warn(`Plugin [${p}] hasn't a valid schema`)
 		}
 	}
 
