@@ -1,6 +1,6 @@
 {
 	"name": "marengo",
-	"version": "0.0.92",
+	"version": "0.0.93",
 	"main": "src/index.js",
 	"dependencies": {
 		"moon-helper": "^0.0.4",

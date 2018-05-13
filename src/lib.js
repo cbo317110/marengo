@@ -1,15 +1,54 @@
-const { objHas, merge } = require('moon-helper')
-const Events = require('./vue/events')
+const { objHas, merge, unique, isFunction } = require('moon-helper')
 
-module.exports = (target, plugins) => {
+export default (target, plugins) => {
 
-	/* Ordinary and default values  */
+	let events = {
+		beforeCreate: [],
+		created: [],
+		mounted: [],
+		updated: []
+	}
+
+	// Ordinary and default values
 	let methods = {}
 	let components = {}
 
-	/* Init the horse */
-	Events.beforeCreate.push(function() {
+	// Init the horse
+	events.beforeCreate.push(function() {
+		
 		this['!(M)'] = target
+		
+		if (!this.$root['(M, root, drive)']) {
+
+			this.$root['(M, root, drive)'] = {}
+			
+			this.$root['(M, root, pull)'] = function(key, standard){
+				if (objHas(this.$root['(M, root, drive)'], key))
+					return this.$root['(M, root, drive)'][key]
+				return standard
+			}
+
+			this.$root['(M, root, push)'] = function(key, value) {
+				this.$root['(M, root, drive)'][key] = value
+			}
+
+			this.$root['(M, root, data)'] = function() {
+				return this.$root['(M, root, drive)']
+			}
+
+		}
+
+		this.$m = function() {
+			let args = Array.from(arguments)
+			let hook = args[0]
+			delete args[0]
+			args = args.filter(n => n != undefined)
+			if ( objHas(this.$root, `(M, root, ${hook})`)
+				&& isFunction(this.$root[`(M, root, ${hook})`]) ) {
+				return this.$root[`(M, root, ${hook})`](...args)
+			}
+		}
+
 	})
 
 	let props = {
@@ -20,40 +59,35 @@ module.exports = (target, plugins) => {
 	}
 
 	let computed = {
-		'(M)': function(){
+		'(M)': function() {
 			return merge(this['!(M)'], this.env)
 		}
 	}
 
 	for (let p in plugins) {
-		if (objHas(plugins, p)) {
-			if (plugins[p].check(target[p])) {
-				if (objHas(plugins[p], 'standard')) {
-					target[p] = merge(plugins[p].standard, target[p])
-				}
-				if (objHas(plugins[p], 'events')) {
-					for (let e in Events) {
-						if (objHas(plugins[p].events, e)) {
-							Events[e].push(plugins[p].events[e])
-						}
+		if (plugins[p].check(target[p])) {
+			if (objHas(plugins[p], 'events')) {
+				for (let e in events) {
+					if (objHas(plugins[p].events, e)) {
+						events[e].push(plugins[p].events[e])
 					}
 				}
-				if (objHas(plugins[p], 'components')) {
-					components = merge(components, plugins[p].components)
-				}
-			} else {
-				console.warn(`Plugin [${p}] hasn't a valid schema`)
+			}
+			if (objHas(plugins[p], 'components')) {
+				components = merge(components, plugins[p].components)
 			}
 		} else {
-			console.warn(`Plugin [${p}] not exists`)
+			console.warn(`Plugin [${p}] hasn't a valid schema`)
 		}
 	}
+
+
 
 	return merge({
 		methods,
 		components,
 		props,
 		computed
-	}, Events)
+	}, events)
 
 }
