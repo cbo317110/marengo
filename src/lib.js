@@ -38,7 +38,7 @@ export default (target, plugins) => {
 
 		}
 
-		this.$m = function() {
+		this.m = function() {
 			let args = Array.from(arguments)
 			let hook = args[0]
 			delete args[0]
