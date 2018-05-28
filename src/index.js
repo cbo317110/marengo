@@ -9,14 +9,31 @@ export default class {
     Vue.use(Vuex)
     Vue.use(VueRouter)
 
+    if (target.extensions) {
+    	target.extensions.forEach(p => {
+    		Vue.use(p[0], p[1])
+    	})
+    }
+
     for (let g in target.globals) {
     	Vue.component(g, target.globals[g])
     }
 
-    let methods = {
-			getter: (url) => this.$store.getters[url],
-			commit: (url, value) => this.$store.commit(url, value)
-		}
+    let methods = Object.assign({
+			getter: function(url) {
+				return this.$store.getters[url]
+			},
+			commit: function(url, value) {
+				return this.$store.commit(url, value)
+			},
+			router: function(push) {
+				push = str => {
+					if (str.includes('/')) this.$router.push({path: str})
+					else this.$router.push(str)
+				}
+				return { push }
+			}
+		}, target.helpers)
 
 		let beforeCreate = new Object
     
@@ -29,6 +46,10 @@ export default class {
     }
     
     router.beforeEach(target.firewall)
+
+    for (let m in target.modules) {
+      modules[m] = Object.assign({ namespaced: true }, target.modules[m])
+    }	
     
     for (let p in plugins) {
       p = plugins[p]
@@ -70,5 +91,6 @@ export default class {
     })
     window.commit = (url, value) => window[target.name].$store.commit(url, value)
 		window.getter = url => window[target.name].$store.getters[url]
+		window.router = () => window[target.name].router()
   }
 }
