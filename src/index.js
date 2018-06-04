@@ -51,6 +51,8 @@ export default class {
 
 	static createModules() {
 		this.Modules = {}
+		this.ModulesToDeploy = []
+		window.modulesDeployed = []
 	}
 
 	static createPlugins() {
@@ -106,6 +108,7 @@ export default class {
 
 	static modules(modules) {
 		Vue.use(Vuex)
+		this.useModules = true
     for (let m in modules) {
     	let ordinary = {
     		namespaced: true,
@@ -119,6 +122,9 @@ export default class {
     		if (typeof modules[m].state[p] == 'boolean') {
     			ordinary.mutations[`toggle${p.charAt(0).toUpperCase() + p.slice(1)}`] = state => state[p] = !state[p]
     		}
+    	}
+    	if (modules[m].actions && modules[m].actions.update) {
+    		this.ModulesToDeploy.push(m)
     	}
       this.Modules[m] = merge(ordinary, modules[m])
     }
@@ -145,6 +151,7 @@ export default class {
  
   static run(target, el) {
   	let plugins = this.Plugins
+  	let modulesToDeploy = this.ModulesToDeploy
   	this.Container.render = h => h(target)
     Vue.mixin({
       methods: this.Methods,
@@ -156,6 +163,16 @@ export default class {
             if (p.body.deploy) p.body.deploy(this)
           }
         })
+        this.$nextTick(() => {
+    			if (this.$el) {
+	      		modulesToDeploy.forEach(m => {
+		      		if (!window.modulesDeployed.includes(m)) {
+		      			this.$store.dispatch(`${m}/update`)
+		      			window.modulesDeployed.push(m)
+		      		}
+		      	})
+      		}
+    		})
       }
     })
 
