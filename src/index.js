@@ -37,6 +37,9 @@ const ordinaryMethods = {
 	commit: function(url, value) {
 		return this.$store.commit(url, value)
 	},
+	dispatch: function(url) {
+		return url => this.$store.dispatch(url)
+	},
 	router: function(push) {
 		push = str => this.$router.push(str)
 		return { push }
@@ -51,8 +54,6 @@ export default class {
 
 	static createModules() {
 		this.Modules = {}
-		this.ModulesToDeploy = []
-		window.modulesDeployed = []
 	}
 
 	static createPlugins() {
@@ -123,9 +124,6 @@ export default class {
     			ordinary.mutations[`toggle${p.charAt(0).toUpperCase() + p.slice(1)}`] = state => state[p] = !state[p]
     		}
     	}
-    	if (modules[m].actions && modules[m].actions.update) {
-    		this.ModulesToDeploy.push(m)
-    	}
       this.Modules[m] = merge(ordinary, modules[m])
     }
     this.Container.store = new Vuex.Store({
@@ -163,22 +161,13 @@ export default class {
             if (p.body.deploy) p.body.deploy(this)
           }
         })
-        this.$nextTick(() => {
-    			if (this.$el) {
-	      		modulesToDeploy.forEach(m => {
-		      		if (!window.modulesDeployed.includes(m)) {
-		      			this.$store.dispatch(`${m}/update`)
-		      			window.modulesDeployed.push(m)
-		      		}
-		      	})
-      		}
-    		})
       }
     })
 
     window[el] = new Vue(this.Container).$mount(el)
     window.commit = (url, value) => window[el].$store.commit(url, value)
 		window.getter = url => window[el].$store.getters[url]
+		window.dispatch = url => window[el].$store.dispatch(url)
 		window.router = () => window[el].router()
 
   }
