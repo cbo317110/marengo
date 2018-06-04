@@ -27,7 +27,7 @@ const targetIsComponent = function(target, option) {
 }
 
 const targetIsMarengoPlugin = function(target, option) {
-	return target.hasOwnProperty('body') && target.hasOwnProperty('name') 
+	return target.hasOwnProperty('body') && target.hasOwnProperty('name')
 }
 
 const ordinaryMethods = {
@@ -40,29 +40,31 @@ const ordinaryMethods = {
 	router: function(push) {
 		push = str => this.$router.push(str)
 		return { push }
-	},
-	date(word) {
-		return word
 	}
 }
 
 export default class {
   
 	static createMethods() {
-		this.methods = ordinaryMethods
+		this.Methods = ordinaryMethods
 	}
 
 	static createModules() {
-		this.modules = {}
+		this.Modules = {}
 	}
 
 	static createPlugins() {
-		this.plugins = []
+		this.Plugins = []
+	}
+
+	static createContainer() {
+		this.Container = {}
 	}
 
 	static prepare() {
 		if (!this.ready) {
 			this.ready = true
+			this.createContainer()
 			this.createModules()
 			this.createPlugins()
 			this.createMethods()
@@ -77,17 +79,17 @@ export default class {
 	}
 
 	static appendMethods(methods) {
-		this.methods = merge(this.methods, methods)	
+		this.Methods = merge(this.Methods, methods)	
 	}
 
 	static appendModule(name, m) {
-		this.modules[name] = merge({ namespaced: true }, m)
+		this.Modules[name] = merge({ namespaced: true }, m)
 	}
 
 	static addPlugin(p, option) {
     p.body = option ? p.body(option) : p.body()
     if (p.body.validation()) {
-      this.plugins.push(p)
+      this.Plugins.push(p)
       if (p.body.module) {
         this.appendModule(p.name, p.body.module)
       }
@@ -102,34 +104,37 @@ export default class {
     }
 	}
 
-  static app(target) {
-
-
-  	let plugins = this.plugins
-  	let methods = this.methods
-
-  	let app = {
-  		render: h => h(target.source)	
-  	}
-    
-    if (target.apps) {
-    	Vue.use(VueRouter)
-	    app.router = new VueRouter({ mode: 'history', routes: target.apps })
-	    if (target.firewall) app.router.beforeEach(target.firewall)
+	static modules(modules) {
+		Vue.use(Vuex)
+    for (let m in modules) {
+      this.Modules[m] = merge({ namespaced: true }, modules[m])
     }
+    this.Container.store = new Vuex.Store({
+    	modules: this.Modules
+    })
+	}
 
-  	if (target.modules) {
-  		Vue.use(Vuex)
-	    for (let m in target.modules) {
-	      this.modules[m] = merge({ namespaced: true }, target.modules[m])
-	    }
-	    app.store = new Vuex.Store({
-	    	modules: this.modules
-	    })
-  	}
+	static routes(routes) {
+		Vue.use(VueRouter)
+		this.Container.router = new VueRouter({
+			mode: 'history',
+			routes
+		})
+	}
 
+	static helpers(methods) {
+		this.appendMethods(methods)
+	}
+
+	static firewall(firewall) {
+		this.Container.router.beforeEach(firewall)
+	}
+ 
+  static run(target, el) {
+  	let plugins = this.Plugins
+  	this.Container.render = h => h(target)
     Vue.mixin({
-      methods,
+      methods: this.Methods,
       beforeCreate() {
         plugins.forEach(p => {
           if (this.$parent) {
@@ -141,11 +146,11 @@ export default class {
       }
     })
 
-    window[target.name] = new Vue(app).$mount(target.el)
-
-    window.commit = (url, value) => window[target.name].$store.commit(url, value)
-		window.getter = url => window[target.name].$store.getters[url]
-		window.router = () => window[target.name].router()
+    window[el] = new Vue(this.Container).$mount(el)
+    window.commit = (url, value) => window[el].$store.commit(url, value)
+		window.getter = url => window[el].$store.getters[url]
+		window.router = () => window[el].router()
 
   }
+
 }
