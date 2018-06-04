@@ -4,6 +4,14 @@ import VueRouter from 'vue-router'
 
 export default class {
   
+	static inject(Plugin, options) {
+		if (options) {
+			Vue.use(Plugin, options)
+		} else {
+			Vue.use(Plugin)
+		}
+	}
+
   constructor(target) {
     
     Vue.use(Vuex)
