@@ -38,7 +38,7 @@ const ordinaryMethods = {
 		return this.$store.commit(url, value)
 	},
 	dispatch: function(url) {
-		return url => this.$store.dispatch(url)
+		return this.$store.dispatch(url)
 	},
 	router: function(push) {
 		push = str => this.$router.push(str)
@@ -53,6 +53,7 @@ export default class {
 	}
 
 	static createModules() {
+		this.Computed = {}
 		this.Modules = {}
 	}
 
@@ -124,6 +125,23 @@ export default class {
     			ordinary.mutations[`toggle${p.charAt(0).toUpperCase() + p.slice(1)}`] = state => state[p] = !state[p]
     		}
     	}
+    	if (modules[m].computed) {
+    		if (typeof modules[m].computed == 'boolean') {
+    			for (let s in modules[m].state) {
+    				this.Computed[`$${m}.${s}`] = {
+    					get() { return this.$store.getters[`${m}/${s}`] },
+    					set(value) { this.$store.commit(`${m}/${s}`, value) }
+    				}
+    			}
+    		} else if (Array.isArray(modules[m].computed)) {
+    			modules[m].computed.forEach(c => {
+    				this.Computed[`$${m}.${c}`] = {
+    					get() { return this.$store.getters[`${m}/${c}`] },
+    					set(value) { this.$store.commit(`${m}/${c}`, value) }
+    				}
+    			})
+    		}
+    	}
       this.Modules[m] = merge(ordinary, modules[m])
     }
     this.Container.store = new Vuex.Store({
@@ -163,13 +181,17 @@ export default class {
         })
       }
     })
-
+    if (this.Container.computed
+    	&& typeof this.Container.computed == 'object') {
+    	this.Container.computed = merge(this.Computed, this.Container.computed)
+    } else {
+			this.Container.computed = this.Computed
+    }
     window[el] = new Vue(this.Container).$mount(el)
     window.commit = (url, value) => window[el].$store.commit(url, value)
 		window.getter = url => window[el].$store.getters[url]
 		window.dispatch = url => window[el].$store.dispatch(url)
 		window.router = () => window[el].router()
-
   }
 
 }
