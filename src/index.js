@@ -107,7 +107,20 @@ export default class {
 	static modules(modules) {
 		Vue.use(Vuex)
     for (let m in modules) {
-      this.Modules[m] = merge({ namespaced: true }, modules[m])
+    	let ordinary = {
+    		namespaced: true,
+    		getters: {},
+    		mutations: {}
+    	}
+    	for (let p in modules[m].state) {
+    		ordinary.getters[p] = state => state[p]
+    		ordinary.mutations[p] = (state, value) => state[p] = value
+    		ordinary.mutations['deploy'] = (state, payload) => state = merge(state, payload)
+    		if (typeof modules[m].state[p] == 'boolean') {
+    			ordinary.mutations[`toggle${p.charAt(0).toUpperCase() + p.slice(1)}`] = state => state[p] = !state[p]
+    		}
+    	}
+      this.Modules[m] = merge(ordinary, modules[m])
     }
     this.Container.store = new Vuex.Store({
     	modules: this.Modules
