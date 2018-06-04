@@ -45,10 +45,7 @@ export default class {
 				return this.$store.commit(url, value)
 			},
 			router: function(push) {
-				push = str => {
-					if (str.includes('/')) this.$router.push({path: str})
-					else this.$router.push(str)
-				}
+				push = str => this.$router.push(str)
 				return { push }
 			}
 		}, target.helpers)
@@ -102,11 +99,10 @@ export default class {
     })    
 
     window[target.name] = new Vue({
-      el: `#${target.el}`,
-      render: h => h(target.from),
+      render: h => h(target.source),
       store: new Vuex.Store({modules}),
       router
-    })
+    }).$mount(target.el)
     window.commit = (url, value) => window[target.name].$store.commit(url, value)
 		window.getter = url => window[target.name].$store.getters[url]
 		window.router = () => window[target.name].router()
