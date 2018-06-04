@@ -2,24 +2,40 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import VueRouter from 'vue-router'
 
+const targetIsPlugin = function(target, option) {
+	return target.hasOwnProperty('install') && typeof target.install == 'function'
+}
+
+const targetIsComponent = function(target, option) {
+	if (typeof option == 'string') {
+			let keys = [
+			'props',
+			'data',
+			'watch',
+			'render',
+			'staticRenderFns',
+			'data',
+			'methods',
+			'created',
+			'beforeCreate',
+			'mounted'
+		]
+		return keys.filter(k => target.hasOwnProperty(k)).length
+	}
+	return false
+}
+
 export default class {
   
-	static inject(Plugin, options) {
-		if (options) {
-			Vue.use(Plugin, options)
-		} else {
-			Vue.use(Plugin)
-		}
+	static inject(target, option) {
+		if (targetIsPlugin(target, option)) option ? Vue.use(target, option) : Vue.use(target)
+		if (targetIsComponent(target, option)) Vue.component(option, target)
 	}
 
   constructor(target) {
     
     Vue.use(Vuex)
     Vue.use(VueRouter)
-
-    for (let g in target.globals) {
-    	Vue.component(g, target.globals[g])
-    }
 
     let methods = Object.assign({
 			getter: function(url) {
