@@ -17,12 +17,6 @@ export default class {
     Vue.use(Vuex)
     Vue.use(VueRouter)
 
-    if (target.extensions) {
-    	target.extensions.forEach(p => {
-    		Vue.use(p[0], p[1])
-    	})
-    }
-
     for (let g in target.globals) {
     	Vue.component(g, target.globals[g])
     }
