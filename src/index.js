@@ -52,8 +52,15 @@ export default class {
 		this.Methods = ordinaryMethods
 	}
 
-	static createModules() {
+	static createComputed() {
 		this.Computed = {}
+	}
+
+	static createWatch() {
+		this.Watch = {}
+	}
+
+	static createModules() {
 		this.Modules = {}
 	}
 
@@ -68,6 +75,8 @@ export default class {
 	static prepare() {
 		if (!this.ready) {
 			this.ready = true
+			this.createComputed()
+			this.createWatch()
 			this.createContainer()
 			this.createModules()
 			this.createPlugins()
@@ -111,18 +120,35 @@ export default class {
 	static modules(modules) {
 		Vue.use(Vuex)
 		this.useModules = true
+		let app = this
     for (let m in modules) {
     	let ordinary = {
     		namespaced: true,
-    		getters: {},
-    		mutations: {}
+    		state: {
+    			deployed: 0
+    		},
+    		getters: {
+    			deployed: state => state.deployed
+    		},
+    		mutations: {
+    			deployed: state => state.deployed++
+    		},
+    		actions: {
+    			unlockUpdates(context) {
+    				Object.keys(context.state).forEach(c => {
+    					app.Target.$watch(`$store.state.${m}.${c}`, function(value) {
+    						context.dispatch('updated', c)
+    					})
+    				})
+    			}
+    		}
     	}
     	for (let p in modules[m].state) {
     		ordinary.getters[p] = state => state[p]
     		ordinary.mutations[p] = (state, value) => state[p] = value
     		ordinary.mutations['deploy'] = (state, payload) => state = merge(state, payload)
     		if (typeof modules[m].state[p] == 'boolean') {
-    			ordinary.mutations[`toggle${p.charAt(0).toUpperCase() + p.slice(1)}`] = state => state[p] = !state[p]
+    			ordinary.mutations[`!${p.charAt(0).toUpperCase() + p.slice(1)}`] = state => state[p] = !state[p]
     		}
     	}
     	if (modules[m].computed) {
@@ -147,6 +173,17 @@ export default class {
     this.Container.store = new Vuex.Store({
     	modules: this.Modules
     })
+    this.Container.store.subscribeAction((action, state) => {
+		  // if (window['commit']) {
+		  // 	Object.keys(this.Modules)
+		  // 	.filter(m => action.type.split('/')[0] == m)
+		  // 	.forEach(m => {
+		  // 		if (this.Modules[m].actions.updated) {
+
+		  // 		}
+		  // 	})
+		  // }
+		})
 	}
 
 	static routes(routes) {
@@ -187,7 +224,14 @@ export default class {
     } else {
 			this.Container.computed = this.Computed
     }
+    if (this.Container.watch
+    	&& typeof this.Container.watch == 'object') {
+    	this.Container.watch = merge(this.Watch, this.Container.watch)
+    } else {
+    	this.Container.watch = this.Watch
+    }
     window[el] = new Vue(this.Container).$mount(el)
+    this.Target = window[el]
     window.commit = (url, value) => window[el].$store.commit(url, value)
 		window.getter = url => window[el].$store.getters[url]
 		window.dispatch = url => window[el].$store.dispatch(url)
