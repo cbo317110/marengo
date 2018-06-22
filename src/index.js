@@ -173,17 +173,7 @@ export default class {
     this.Container.store = new Vuex.Store({
     	modules: this.Modules
     })
-    this.Container.store.subscribeAction((action, state) => {
-		  // if (window['commit']) {
-		  // 	Object.keys(this.Modules)
-		  // 	.filter(m => action.type.split('/')[0] == m)
-		  // 	.forEach(m => {
-		  // 		if (this.Modules[m].actions.updated) {
-
-		  // 		}
-		  // 	})
-		  // }
-		})
+    window['store'] = this.Container.store
 	}
 
 	static routes(routes) {
